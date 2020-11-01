@@ -16,17 +16,55 @@ class SubNFA:
 class NFA:
     # todo::最小单位应该为NFA（连接、闭包等操作的都是NFA，
     #  最简单的NFA就是一个单词）
-    def __init__(self, re):
+    def __init__(self, re, postfix=False):
         # init the vars
         self.raw_re = re
         self.__edge_list = []
         self.__node_map = {}
-        # build nfa
-        self.build_nfa()
+
+        # build NFA
+        if postfix:
+            self.build_nfa_from_postfix()
+        else:
+            self.build_nfa()
 
     def build_nfa(self):
+        # priority: () > *,+ > | > link
         for char in self.raw_re:
             pass
+
+    def build_nfa_from_postfix(self):
+        stack = []
+        operand_buffer = []
+
+        char_ptr = 0
+        while char_ptr < len(self.raw_re):
+            if self.raw_re[char_ptr] == "(":
+                stack.append(operand_buffer)
+                operand_buffer = []
+            elif self.raw_re[char_ptr] == ")":
+                # 用当前buffer里的操作数计算，然后退栈，将计算结果放入原栈顶的buffer
+                char_ptr += 1
+                operator = self.raw_re[char_ptr]
+                result = None
+                if operator == "&":
+                    # 连接运算
+                    result = self.make_link(*operand_buffer)
+                elif operator == "|":
+                    # 或运算
+                    result = self.make_or(*operand_buffer)
+                elif operator == "*":
+                    # 闭包运算
+                    result = self.make_closure(*operand_buffer)
+                operand_buffer = stack.pop()
+                operand_buffer.append(result)
+            elif self.raw_re[char_ptr] == ",":
+                # "," is the splitter of operands.
+                pass
+            else:
+                # 生成匹配一个字符的NFA
+                operand_buffer.append(self.char_match(self.raw_re[char_ptr]))
+            char_ptr += 1
 
     def build_node(self):
         """
@@ -109,5 +147,3 @@ class NFA:
         nx.draw_networkx_edges(graph, pos)
         nx.draw_networkx_labels(graph, pos)  # draw nodes with labels
         plt.show()
-
-
