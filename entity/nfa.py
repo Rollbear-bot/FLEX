@@ -32,7 +32,9 @@ class NFA:
             self.build_nfa_from_postfix()
         else:
             self.build_nfa()
-        self.assign_node_color()
+        self.assign_node_color(color_start_node,
+                               color_end_node,
+                               color_other)
 
     def build_nfa(self):
         # priority: () > *,+ > | > link
@@ -75,9 +77,9 @@ class NFA:
         self.root_NFA = operand_buffer[0]
 
     def assign_node_color(self,
-                          color_start_node="#a195fb",
-                          color_end_node="#ff8696",
-                          color_other="#e5f7ff"):
+                          color_start_node,
+                          color_end_node,
+                          color_other):
         """
         assign the color of nodes (while drawing figure)
         :return: None
@@ -170,3 +172,56 @@ class NFA:
         nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
 
         plt.show()
+
+    # def get_closure_empty(self, node_lt):
+    #     """求若干点的空闭包"""
+    #     res = []
+    #     for edge in self.__edge_list:
+    #         if edge[0] in node_lt and edge[2] is None:
+    #             res.append(edge[1])
+    #             node_lt.append(edge[1])
+    #     res = []
+
+    def get_closure(self, node_lt, letter):
+        """求一个点或者若干点对一个字母（或空）的闭包"""
+        node_lt_buffer = list(node_lt)
+        # 仅当求空闭包时，结果才包含自身
+        if letter is None:
+            res = node_lt_buffer.copy()
+        else:
+            res = []
+
+        updated = True
+        while updated:
+            updated = False
+            for edge in self.__edge_list:
+                if edge[0] in node_lt_buffer and edge[1] not in node_lt_buffer and edge[2] is None:
+                    node_lt_buffer.append(edge[1])
+                    updated = True
+                    break
+                if edge[0] in node_lt_buffer and edge[2] == letter:
+                    res.append(edge[1])
+
+        # 结果应再求一次空的闭包
+        if letter is not None:
+            extend_res = self.get_closure(res, None)
+            return tuple(set(extend_res))
+        else:
+            return tuple(set(res))
+
+    def get_closure_avail_letter(self, node_lt):
+        """获得当前闭包（node id的集合）可达的所有字母"""
+        res = []
+        node_lt_buffer = list(node_lt)
+
+        updated = True
+        while updated:
+            updated = False
+            for edge in self.__edge_list:
+                if edge[0] in node_lt_buffer and edge[1] not in node_lt_buffer and edge[2] is None:
+                    node_lt_buffer.append(edge[1])
+                    updated = True
+                    break
+                if edge[0] in node_lt_buffer and edge[2] is not None:
+                    res.append(edge[2])
+        return tuple(set(res))
