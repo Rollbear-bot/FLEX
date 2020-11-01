@@ -16,9 +16,14 @@ class SubNFA:
 class NFA:
     # todo::最小单位应该为NFA（连接、闭包等操作的都是NFA，
     #  最简单的NFA就是一个单词）
-    def __init__(self, re, postfix=False):
+    def __init__(self, re, postfix=False,
+                 color_start_node="#a195fb",
+                 color_end_node="#ff8696",
+                 color_other="#e5f7ff"):
         # init the vars
         self.raw_re = re
+        self.root_NFA = None
+        self.color_map = None
         self.__edge_list = []
         self.__node_map = {}
 
@@ -27,6 +32,7 @@ class NFA:
             self.build_nfa_from_postfix()
         else:
             self.build_nfa()
+        self.assign_node_color()
 
     def build_nfa(self):
         # priority: () > *,+ > | > link
@@ -65,6 +71,20 @@ class NFA:
                 # 生成匹配一个字符的NFA
                 operand_buffer.append(self.char_match(self.raw_re[char_ptr]))
             char_ptr += 1
+
+        self.root_NFA = operand_buffer[0]
+
+    def assign_node_color(self,
+                          color_start_node="#a195fb",
+                          color_end_node="#ff8696",
+                          color_other="#e5f7ff"):
+        """
+        assign the color of nodes (while drawing figure)
+        :return: None
+        """
+        self.color_map = [color_other for i in range(len(self.__node_map))]
+        self.color_map[self.root_NFA.start_ptr] = color_start_node
+        self.color_map[self.root_NFA.end_ptr] = color_end_node
 
     def build_node(self):
         """
@@ -138,18 +158,13 @@ class NFA:
     def draw(self):
         """draw the figure of NFA"""
         graph = nx.DiGraph()  # init a networkx directed-graph
-        # graph.add_edges_from(self.__edge_list)
         for edge in self.__edge_list:
             graph.add_edge(edge[0], edge[1], label=edge[2])
 
         pos = nx.spring_layout(graph)
-        # nx.draw_networkx_nodes(graph, pos)
-        # nx.draw_networkx_edges(graph, pos)
-        # nx.draw_networkx_labels(graph, pos)  # draw nodes with labels
-
         capacity = nx.get_edge_attributes(graph, "label")
 
-        nx.draw_networkx_nodes(graph, pos)  # 画出点
+        nx.draw_networkx_nodes(graph, pos, node_color=self.color_map)  # 画出点
         nx.draw_networkx_edges(graph, pos)  # 画出边
         nx.draw_networkx_labels(graph, pos)  # 画出点上的label
         nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
