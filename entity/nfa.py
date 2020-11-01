@@ -104,9 +104,7 @@ class NFA:
         :param post_nfa: post-operand
         :return: current NFA
         """
-        mid = self.build_node()
-        self.build_edge(pre_nfa.end_ptr, mid, None)
-        self.build_edge(mid, post_nfa.start_ptr, None)
+        self.build_edge(pre_nfa.end_ptr, post_nfa.start_ptr, None)
         return SubNFA(pre_nfa.start_ptr, post_nfa.end_ptr)
 
     def make_closure(self, operand_nfa: SubNFA):
@@ -140,10 +138,20 @@ class NFA:
     def draw(self):
         """draw the figure of NFA"""
         graph = nx.DiGraph()  # init a networkx directed-graph
-        graph.add_edges_from(self.__edge_list)
+        # graph.add_edges_from(self.__edge_list)
+        for edge in self.__edge_list:
+            graph.add_edge(edge[0], edge[1], label=edge[2])
 
         pos = nx.spring_layout(graph)
-        nx.draw_networkx_nodes(graph, pos)
-        nx.draw_networkx_edges(graph, pos)
-        nx.draw_networkx_labels(graph, pos)  # draw nodes with labels
+        # nx.draw_networkx_nodes(graph, pos)
+        # nx.draw_networkx_edges(graph, pos)
+        # nx.draw_networkx_labels(graph, pos)  # draw nodes with labels
+
+        capacity = nx.get_edge_attributes(graph, "label")
+
+        nx.draw_networkx_nodes(graph, pos)  # 画出点
+        nx.draw_networkx_edges(graph, pos)  # 画出边
+        nx.draw_networkx_labels(graph, pos)  # 画出点上的label
+        nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
+
         plt.show()
