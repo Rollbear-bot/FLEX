@@ -3,12 +3,24 @@
 # @Author: Rollbear
 # @Filename: nfa.py
 
+import networkx as nx
+import matplotlib.pyplot as plt
+
+
+class SubNFA:
+    def __init__(self, start, end):
+        self.start_ptr = start  # 指向NFA中的开始节点
+        self.end_ptr = end  # 指向NFA中的结束节点
+
+
 class NFA:
+    # todo::最小单位应该为NFA（连接、闭包等操作的都是NFA，
+    #  最简单的NFA就是一个单词）
     def __init__(self, re):
         # init the vars
         self.raw_re = re
-        self.edge_list = []
-        self.node_map = {}
+        self.__edge_list = []
+        self.__node_map = {}
         # build nfa
         self.build_nfa()
 
@@ -16,65 +28,86 @@ class NFA:
         for char in self.raw_re:
             pass
 
-    @property
-    def start_node(self):
-        return None
-
-    @property
-    def end_node(self):
-        return None
-
     def build_node(self):
         """
         build a node in nfa
-        :return: None
+        :return: node id
         """
-        node_id = len(self.node_map)
-        self.node_map.update({node_id: []})
+        node_id = len(self.__node_map)
+        self.__node_map.update({node_id: []})
         return node_id
 
-    def build_edge(self, parent, desc):
+    def build_edge(self, parent, desc, edge_attr):
         """
         build a edge in nfa
+        :param edge_attr: 
         :param parent: parent_node
         :param desc: descendent_node
         :return: None
         """
-        self.node_map[parent].append(desc)
-        self.edge_list.append((parent, desc))
+        self.__node_map[parent].append(desc)
+        self.__edge_list.append((parent, desc, edge_attr))
 
-    def make_link(self, pre_nfa, post_nfa):
+    def char_match(self, char):
+        """
+        ground NFA: match a char
+        :param char: the char this NFA matching
+        :return: current NFA
+        """
+        pre_node = self.build_node()
+        post_node = self.build_node()
+        self.build_edge(pre_node, post_node, char)
+        return SubNFA(pre_node, post_node)
+
+    def make_link(self, pre_nfa: SubNFA, post_nfa: SubNFA):
         """
         linking operation
         :param pre_nfa: pre-operand
         :param post_nfa: post-operand
-        :return: None
+        :return: current NFA
         """
         mid = self.build_node()
-        self.edge_list.append((pre_nfa, mid))
-        self.edge_list.append((mid, post_nfa))
+        self.build_edge(pre_nfa.end_ptr, mid, None)
+        self.build_edge(mid, post_nfa.start_ptr, None)
+        return SubNFA(pre_nfa.start_ptr, post_nfa.end_ptr)
 
-    def make_closure(self, operand_nfa):
+    def make_closure(self, operand_nfa: SubNFA):
         """
         closure operation
         :param operand_nfa: single operand
-        :return: None
+        :return: current NFA
         """
         pre = self.build_node()
         post = self.build_node()
-        self.edge_list.append((pre, operand_nfa))
-        self.edge_list.append((operand_nfa, post))
+        self.build_edge(pre, operand_nfa.start_ptr, None)
+        self.build_edge(operand_nfa.end_ptr, post, None)
+        self.build_edge(post, pre, None)
+        return SubNFA(pre, post)
 
-    def make_or(self, pre_nfa, post_nfa):
+    def make_or(self, nfa_a: SubNFA, nfa_b: SubNFA):
         """
         or operation
-        :param pre_nfa: pre-operand
-        :param post_nfa: post-operand
-        :return: None
+        :param nfa_a: pre-operand
+        :param nfa_b: post-operand
+        :return: current NFA
         """
         split = self.build_node()
         merge = self.build_node()
-        self.edge_list.append((split, pre_nfa))
-        self.edge_list.append((pre_nfa, merge))
-        self.edge_list.append((split, post_nfa))
-        self.edge_list.append((post_nfa, merge))
+        self.build_edge(split, nfa_a.start_ptr, None)
+        self.build_edge(nfa_a.end_ptr, merge, None)
+        self.build_edge(split, nfa_b.start_ptr, None)
+        self.build_edge(nfa_b.end_ptr, merge, None)
+        return SubNFA(split, merge)
+
+    def draw(self):
+        """draw the figure of NFA"""
+        graph = nx.DiGraph()  # init a networkx directed-graph
+        graph.add_edges_from(self.__edge_list)
+
+        pos = nx.spring_layout(graph)
+        nx.draw_networkx_nodes(graph, pos)
+        nx.draw_networkx_edges(graph, pos)
+        nx.draw_networkx_labels(graph, pos)  # draw nodes with labels
+        plt.show()
+
+
