@@ -82,7 +82,7 @@ class DFA:
                 color_map.append(color_other)
         return color_map
 
-    def draw(self):
+    def draw(self, dump_path=None):
         # todo::networkx画不了自环
         pos = nx.spring_layout(self.nx_graph)
         capacity = nx.get_edge_attributes(self.nx_graph, "label")
@@ -92,8 +92,20 @@ class DFA:
         nx.draw_networkx_labels(self.nx_graph, pos)  # 画出点上的label
         nx.draw_networkx_edge_labels(self.nx_graph, pos, capacity)  # 画出边上的label（例如权）
 
-        plt.show()
+        if dump_path is None:
+            plt.show()
+        else:
+            plt.savefig(dump_path)
 
     @property
     def node_map(self):
         return self.__node_map
+
+    def print_node_map(self):
+        output = ""
+        for key, value in self.node_map.items():
+            output += str(key)
+            output += "\t" * 3
+            output += str(value)
+            output += "\n"
+        return output

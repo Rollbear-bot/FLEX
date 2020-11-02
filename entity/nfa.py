@@ -14,8 +14,6 @@ class SubNFA:
 
 
 class NFA:
-    # todo::最小单位应该为NFA（连接、闭包等操作的都是NFA，
-    #  最简单的NFA就是一个单词）
     def __init__(self, re, postfix=False,
                  color_start_node="#a195fb",
                  color_end_node="#ff8696",
@@ -157,7 +155,7 @@ class NFA:
         self.build_edge(nfa_b.end_ptr, merge, None)
         return SubNFA(split, merge)
 
-    def draw(self):
+    def draw(self, dump_path=None):
         """draw the figure of NFA"""
         graph = nx.DiGraph()  # init a networkx directed-graph
         for edge in self.__edge_list:
@@ -171,16 +169,10 @@ class NFA:
         nx.draw_networkx_labels(graph, pos)  # 画出点上的label
         nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
 
-        plt.show()
-
-    # def get_closure_empty(self, node_lt):
-    #     """求若干点的空闭包"""
-    #     res = []
-    #     for edge in self.__edge_list:
-    #         if edge[0] in node_lt and edge[2] is None:
-    #             res.append(edge[1])
-    #             node_lt.append(edge[1])
-    #     res = []
+        if dump_path is None:
+            plt.show()
+        else:
+            plt.savefig(dump_path)
 
     def get_closure(self, node_lt, letter):
         """求一个点或者若干点对一个字母（或空）的闭包"""
