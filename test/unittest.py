@@ -4,15 +4,18 @@
 # @Filename: unittest.py
 
 import unittest
-from unittest import TestCase
 
 from entity.nfa import NFA
 
 
-class TestFLEX(TestCase):
+class TestFLEX(unittest.TestCase):
     def test_nfa(self):
         re = "a|ab"
         nfa = NFA(re)
+
+    def test_build_from_postfix(self):
+        re = "(a,(a,b)&)|"
+        nfa = NFA(re, postfix=True)
 
 
 if __name__ == '__main__':

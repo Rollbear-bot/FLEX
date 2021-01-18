@@ -83,6 +83,7 @@ class DFA:
         return color_map
 
     def draw(self, dump_path=None):
+        plt.clf()
         # todo::networkx画不了自环
         pos = nx.spring_layout(self.nx_graph)
         capacity = nx.get_edge_attributes(self.nx_graph, "label")

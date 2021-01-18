@@ -34,6 +34,23 @@ class NFA:
                                color_end_node,
                                color_other)
 
+    @staticmethod
+    def RE_to_midfix(re_string):
+        # todo::将RE转化为中缀表达式，再转化为后缀表达式
+        operators = ["|", "*", "+", "(", ")"]
+        res = re_string
+
+        char_index = 0
+        while char_index < len(re_string):
+            if re_string[char_index] not in operators:
+                if char_index < len(re_string) - 1 and \
+                        re_string[char_index + 1] not in operators:
+                    res = res[:char_index + 1] + "&" + res[char_index + 1:]
+                    char_index += 1
+
+            char_index += 1
+        return res
+
     def build_nfa(self):
         # priority: () > *,+ > | > link
         for char in self.raw_re:
@@ -157,6 +174,7 @@ class NFA:
 
     def draw(self, dump_path=None):
         """draw the figure of NFA"""
+        plt.clf()
         graph = nx.DiGraph()  # init a networkx directed-graph
         for edge in self.__edge_list:
             graph.add_edge(edge[0], edge[1], label=edge[2])
