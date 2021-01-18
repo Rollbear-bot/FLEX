@@ -2,9 +2,11 @@
 # @Time: 2020/10/28 18:41
 # @Author: Rollbear
 # @Filename: nfa.py
+import os
 
 import networkx as nx
 import matplotlib.pyplot as plt
+from graphviz import Digraph
 
 
 class SubNFA:
@@ -172,25 +174,51 @@ class NFA:
         self.build_edge(nfa_b.end_ptr, merge, None)
         return SubNFA(split, merge)
 
-    def draw(self, dump_path=None):
+    def draw(self, dump_path=None, use_graphviz=True):
         """draw the figure of NFA"""
-        plt.clf()
-        graph = nx.DiGraph()  # init a networkx directed-graph
-        for edge in self.__edge_list:
-            graph.add_edge(edge[0], edge[1], label=edge[2])
+        if not use_graphviz:
+            plt.clf()
+            graph = nx.DiGraph()  # init a networkx directed-graph
+            for edge in self.__edge_list:
+                graph.add_edge(edge[0], edge[1], label=edge[2])
 
-        pos = nx.spring_layout(graph)
-        capacity = nx.get_edge_attributes(graph, "label")
+            pos = nx.spring_layout(graph)
+            capacity = nx.get_edge_attributes(graph, "label")
 
-        nx.draw_networkx_nodes(graph, pos, node_color=self.color_map)  # 画出点
-        nx.draw_networkx_edges(graph, pos)  # 画出边
-        nx.draw_networkx_labels(graph, pos)  # 画出点上的label
-        nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
+            nx.draw_networkx_nodes(graph, pos, node_color=self.color_map)  # 画出点
+            nx.draw_networkx_edges(graph, pos)  # 画出边
+            nx.draw_networkx_labels(graph, pos)  # 画出点上的label
+            nx.draw_networkx_edge_labels(graph, pos, capacity)  # 画出边上的label（例如权）
 
-        if dump_path is None:
-            plt.show()
-        else:
-            plt.savefig(dump_path)
+            if dump_path is None:
+                plt.show()
+            else:
+                plt.savefig(dump_path)
+        elif use_graphviz:
+            dump_filename = dump_path[str(dump_path).rfind("/") + 1:]
+            dump_dir = dump_path[:str(dump_path).rfind("/") + 1]
+            graph = Digraph(name="NFA")
+            # 向图结构中添加边
+            for edge in self.__edge_list:
+                graph.edge(str(edge[0]), str(edge[1]), label=str(edge[2]))
+            print(graph.source)
+            graph.render(filename="tmp", directory=dump_dir,
+                         view=False, cleanup=False)
+            # 通过系统调用dor指令来生成NFA的jpg格式图片
+            cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+            print(os.system(cmd))
+
+    # def draw_with_graphviz(self, dump_dir, dump_filename):
+    #     graph = Digraph(name="NFA")
+    #     # 向图结构中添加边
+    #     for edge in self.__edge_list:
+    #         graph.edge(str(edge[0]), str(edge[1]), label=str(edge[2]))
+    #     print(graph.source)
+    #     graph.render(filename="tmp", directory=dump_dir,
+    #                  view=False, cleanup=False)
+    #     # 通过系统调用dor指令来生成NFA的jpg格式图片
+    #     cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+    #     print(os.system(cmd))
 
     def get_closure(self, node_lt, letter):
         """求一个点或者若干点对一个字母（或空）的闭包"""

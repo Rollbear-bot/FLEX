@@ -3,8 +3,10 @@
 # @Author: Rollbear
 # @Filename: dfa.py
 
+import os
 import networkx as nx
 import matplotlib.pyplot as plt
+from graphviz import Digraph
 
 from entity.nfa import NFA
 
@@ -82,21 +84,52 @@ class DFA:
                 color_map.append(color_other)
         return color_map
 
-    def draw(self, dump_path=None):
-        plt.clf()
-        # todo::networkx画不了自环
-        pos = nx.spring_layout(self.nx_graph)
-        capacity = nx.get_edge_attributes(self.nx_graph, "label")
+    def draw(self, dump_path=None, use_graphviz=True):
+        if not use_graphviz:
+            # warning: networkx画不了自环
+            plt.clf()
+            pos = nx.spring_layout(self.nx_graph)
+            capacity = nx.get_edge_attributes(self.nx_graph, "label")
 
-        nx.draw_networkx_nodes(self.nx_graph, pos, node_color=self.color_map)  # 画出点
-        nx.draw_networkx_edges(self.nx_graph, pos)  # 画出边
-        nx.draw_networkx_labels(self.nx_graph, pos)  # 画出点上的label
-        nx.draw_networkx_edge_labels(self.nx_graph, pos, capacity)  # 画出边上的label（例如权）
+            nx.draw_networkx_nodes(self.nx_graph, pos, node_color=self.color_map)  # 画出点
+            nx.draw_networkx_edges(self.nx_graph, pos)  # 画出边
+            nx.draw_networkx_labels(self.nx_graph, pos)  # 画出点上的label
+            nx.draw_networkx_edge_labels(self.nx_graph, pos, capacity)  # 画出边上的label（例如权）
 
-        if dump_path is None:
-            plt.show()
-        else:
-            plt.savefig(dump_path)
+            if dump_path is None:
+                plt.show()
+            else:
+                plt.savefig(dump_path)
+        elif use_graphviz:
+            # 使用graphviz来画图
+            dump_filename = dump_path[str(dump_path).rfind("/")+1:]
+            dump_dir = dump_path[:str(dump_path).rfind("/")+1]
+            graph = Digraph(name="DFA")
+            # 向图结构中添加边
+            for cur_node, dest_map in self.node_map.items():
+                for dest in dest_map:
+                    graph.edge(str(cur_node), str(dest[1]), label=str(dest[0]))
+
+            print(graph.source)
+            graph.render(filename="tmp", directory=dump_dir,
+                         view=False, cleanup=False)
+            # 通过系统调用dor指令来生成NFA的jpg格式图片
+            cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+            print(os.system(cmd))
+
+    # def draw_with_graphviz(self, dump_dir, dump_filename):
+    #     graph = Digraph(name="DFA")
+    #     # 向图结构中添加边
+    #     for cur_node, dest_map in self.node_map.items():
+    #         for dest in dest_map:
+    #             graph.edge(str(cur_node), str(dest[1]), label=str(dest[0]))
+    #
+    #     print(graph.source)
+    #     graph.render(filename="tmp", directory=dump_dir,
+    #                  view=False, cleanup=False)
+    #     # 通过系统调用dor指令来生成NFA的jpg格式图片
+    #     cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+    #     print(os.system(cmd))
 
     @property
     def node_map(self):
