@@ -204,8 +204,9 @@ class NFA:
             print(graph.source)
             graph.render(filename="tmp", directory=dump_dir,
                          view=False, cleanup=False)
-            # 通过系统调用dor指令来生成NFA的jpg格式图片
-            cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+            # 通过系统调用dor指令来生成NFA的jpg/png格式图片
+            # cmd = f"dot -Tjpg {dump_dir}tmp -o {dump_dir + dump_filename}"
+            cmd = f"dot -Tpng {dump_dir}tmp -o {dump_dir + dump_filename}"
             print(os.system(cmd))
 
     # def draw_with_graphviz(self, dump_dir, dump_filename):
